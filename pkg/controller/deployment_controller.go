@@ -26,7 +26,7 @@ const (
 
 type Controller struct {
 	kubeclientset    kubernetes.Interface
-	deploymentLister appslisters.DeploymentLister
+	deploymentLister appslisters.DeploymentLister //list or get, can not update
 	deploymentSynced cache.InformerSynced
 	workqueue        workqueue.RateLimitingInterface
 	recorder         record.EventRecorder
@@ -40,11 +40,11 @@ func (c *Controller) handleObj(obj interface{}) {
 		namespace := object.GetNamespace()
 		fmt.Printf("deployment: %s/%s", namespace, name)
 		deployment, err := c.deploymentLister.Deployments(namespace).Get(name)
+		//object deleted
 		if err != nil {
-			klog.Errorf("failed to list deployment %s/%s", namespace, name)
+			klog.Errorf("ignore orphaned deployment %s/%s", namespace, name)
 			return
 		}
-		//todo: delete func
 		c.enqueueDeployment(deployment)
 	} else {
 		klog.Error("error decoding object, invalid type")
@@ -62,6 +62,10 @@ func (c *Controller) handleDeploymentUpdate(old, new interface{}) {
 }
 
 func (c *Controller) Run(concurrent int, stopCh <-chan struct{}) error {
+	/*
+	1. sync cache
+	2. use gorouting to process workqueue items
+	 */
 	defer c.workqueue.ShutDown()
 	klog.Info("starting deployment controller")
 	klog.Info("waiting for informer caches to sync")

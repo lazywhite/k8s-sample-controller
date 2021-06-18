@@ -32,6 +32,12 @@ func main() {
 	kubeInformerFactory := informers.NewSharedInformerFactory(kubeClient, time.Second*30)
 	ctrl := controller.NewController(kubeClient, kubeInformerFactory.Apps().V1().Deployments())
 
+	/*
+		1. SharedIndexerInformer.Start() will trigger eventFunc
+		2. eventFunc will put item in workqueue
+		3. ctrl.Run() will use worker to process items
+	*/
+
 	kubeInformerFactory.Start(stopCh)
 	if err = ctrl.Run(10, stopCh); err != nil {
 		klog.Fatalf("error running controller: %s", err.Error())
