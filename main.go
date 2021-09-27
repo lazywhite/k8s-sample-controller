@@ -30,6 +30,7 @@ func main() {
 		klog.Fatalf("error building kuberentes clientset: %s", err.Error())
 	}
 	kubeInformerFactory := informers.NewSharedInformerFactory(kubeClient, time.Second*30)
+	//kubeInformerFactory := informers.NewSharedInformerFactoryWithOptions(kubeClient, time.Second*30, informers.WithNamespace("default"))
 	ctrl := controller.NewController(kubeClient, kubeInformerFactory.Apps().V1().Deployments())
 
 	/*
